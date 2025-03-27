@@ -21,6 +21,8 @@ usage() {
     cat <<EOF
 Usage: ${progname} <command> [subcommand/arguments] [OPTIONS]
 
+Expect a config file in ~/.config/hugo_wrapper.conf
+
 Commands:
   new post "Post Title" [OPTIONS]
       Creates a new post.
