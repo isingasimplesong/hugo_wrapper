@@ -18,8 +18,10 @@ DEPLOY_HOST="${DEPLOY_HOST:-deploy.host.tld}"
 # Usage message
 #############################
 usage() {
+    local progname
+    progname=$(basename "$0")
     cat <<EOF
-Usage: $0 <command> [subcommand/arguments] [OPTIONS]
+Usage: ${progname} <command> [subcommand/arguments] [OPTIONS]
 
 Commands:
   new post "Post Title" [OPTIONS]
@@ -36,9 +38,9 @@ Commands:
       Build the site with Hugo and deploy it using rsync.
 
 Common Options:
-  -p, --project-path PATH       Override the project directory (default: \$PROJECT_PATH).
-  -d, --deploy-path PATH        Override the remote deploy path (default: \$DEPLOY_PATH).
-  -H, --deploy-host HOST        Override the remote deploy host (default: \$DEPLOY_HOST).
+  -p, --project-path PATH       Override the project directory
+  -d, --deploy-path PATH        Override the remote deploy path
+  -H, --deploy-host HOST        Override the remote deploy host
   -h, --help                    Display this help and exit.
 
 Examples:
