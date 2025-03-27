@@ -10,9 +10,9 @@ if [[ -f "$CONFIG_FILE" ]]; then
 fi
 
 # Set defaults if not provided in conf.
-PROJECT_PATH="${PROJECT_PATH:-$(pwd)}"
-DEPLOY_PATH="${DEPLOY_PATH:-/srv/log.2027a.net/public}"
-DEPLOY_HOST="${DEPLOY_HOST:-voyager}"
+PROJECT_PATH="${PROJECT_PATH:-$(pwd)}"                  # absolute path on the machine that run this wrapper
+DEPLOY_PATH="${DEPLOY_PATH:-/path/to/deploy/directory}" # absolute path on the server
+DEPLOY_HOST="${DEPLOY_HOST:-deploy.host.tld}"
 
 #############################
 # Usage message
@@ -95,7 +95,6 @@ slugify() {
 #############################
 new_post() {
     local title="$1"
-    # Override common options (if any) passed after title.
     shift
     parse_common_options "$@"
 
@@ -104,12 +103,15 @@ new_post() {
     local date_str
     date_str=$(date +%Y-%m-%d)
     local file_rel_path="content/posts/${date_str}-${slug}.md"
-    local file_path="${PROJECT_PATH}/${file_rel_path}"
 
     cd "$PROJECT_PATH" || {
         echo "Invalid project path: $PROJECT_PATH"
         exit 1
     }
+    # Convert PROJECT_PATH to its absolute value
+    PROJECT_PATH="$(pwd)"
+
+    local file_path="${PROJECT_PATH}/${file_rel_path}"
 
     echo "Creating new post: $file_path"
     if ! hugo new "$file_rel_path"; then
@@ -117,6 +119,11 @@ new_post() {
         exit 1
     fi
     echo "Post created successfully."
+
+    if [ -n "${EDITOR:-}" ]; then
+        echo "Opening post in \$EDITOR ($EDITOR)..."
+        "$EDITOR" "$file_path"
+    fi
 }
 
 #############################
@@ -130,12 +137,15 @@ new_page() {
     local slug
     slug=$(slugify "$title")
     local file_rel_path="content/pages/${slug}.md"
-    local file_path="${PROJECT_PATH}/${file_rel_path}"
 
     cd "$PROJECT_PATH" || {
         echo "Invalid project path: $PROJECT_PATH"
         exit 1
     }
+    # Convert PROJECT_PATH to its absolute value
+    PROJECT_PATH="$(pwd)"
+
+    local file_path="${PROJECT_PATH}/${file_rel_path}"
 
     echo "Creating new page: $file_path"
     if ! hugo new "$file_rel_path"; then
@@ -143,6 +153,11 @@ new_page() {
         exit 1
     fi
     echo "Page created successfully."
+
+    if [ -n "${EDITOR:-}" ]; then
+        echo "Opening page in \$EDITOR ($EDITOR)..."
+        "$EDITOR" "$file_path"
+    fi
 }
 
 #############################
