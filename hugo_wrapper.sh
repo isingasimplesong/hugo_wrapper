@@ -1,22 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-#############################
-# Load configuration file
-#############################
 CONFIG_FILE="$HOME/.config/hugo_wrapper.conf"
 if [[ -f "$CONFIG_FILE" ]]; then
     source "$CONFIG_FILE"
 fi
 
-# Set defaults if not provided in conf.
-PROJECT_PATH="${PROJECT_PATH:-$(pwd)}"                  # absolute path on the machine that run this wrapper
-DEPLOY_PATH="${DEPLOY_PATH:-/path/to/deploy/directory}" # absolute path on the server
-DEPLOY_HOST="${DEPLOY_HOST:-deploy.host.tld}"
+# Loop over required variables and check if they're set.
+for var in PROJECT_PATH DEPLOY_PATH DEPLOY_HOST; do
+    if [ -z "${!var:-}" ]; then
+        echo "Error: $var is not set. Please set $var on the CLI or in your config file." >&2
+        exit 1
+    fi
+done
 
-#############################
 # Usage message
-#############################
 usage() {
     local progname
     progname=$(basename "$0")
@@ -50,10 +48,8 @@ Examples:
 EOF
 }
 
-#############################
 # Helper: Parse common options
-#############################
-# This function will iterate over remaining CLI args and override the common variables.
+# This function will iterate over remaining CLI args and override the conf variables
 parse_common_options() {
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
@@ -82,9 +78,7 @@ parse_common_options() {
     done
 }
 
-#############################
 # Helper: Slugify title
-#############################
 slugify() {
     local title="$1"
     # Convert to lower case, replace non-alphanumerics with dashes,
@@ -92,9 +86,7 @@ slugify() {
     echo "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | sed 's/^-//;s/-$//'
 }
 
-#############################
 # Command: new post
-#############################
 new_post() {
     local title="$1"
     shift
@@ -110,6 +102,7 @@ new_post() {
         echo "Invalid project path: $PROJECT_PATH"
         exit 1
     }
+
     # Convert PROJECT_PATH to its absolute value
     PROJECT_PATH="$(pwd)"
 
@@ -128,9 +121,7 @@ new_post() {
     fi
 }
 
-#############################
 # Command: new page
-#############################
 new_page() {
     local title="$1"
     shift
@@ -162,9 +153,7 @@ new_page() {
     fi
 }
 
-#############################
 # Command: deploy
-#############################
 deploy_site() {
     parse_common_options "$@"
 
@@ -194,9 +183,7 @@ deploy_site() {
     echo "Deployment succeeded!"
 }
 
-#############################
 # Main command dispatcher
-#############################
 if [[ "$#" -lt 1 ]]; then
     usage
     exit 1
