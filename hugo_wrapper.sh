@@ -47,28 +47,30 @@ Usage: ${progname} <command> [subcommand/arguments] [OPTIONS]
 
 Commands:
   new post "Post Title" [OPTIONS]
-      Creates a new post.
+      Creates a new post
       The post file will be created as:
          content/posts/<YYYY-MM-DD>-<slugified-title>.md
 
   new page "Page Title" [OPTIONS]
-      Creates a new page.
+      Creates a new page
       The page file will be created as:
          content/pages/<slugified-title>.md
 
   deploy [OPTIONS]
-      Build the site with Hugo and deploy it using rsync.
+      Build the site with Hugo and deploy it using rsync
 
 Common Options:
   -p, --project-path PATH       Override the project directory
   -d, --deploy-path PATH        Override the remote deploy path
   -H, --deploy-host HOST        Override the remote deploy host
-  -h, --help                    Display this help and exit.
+  --dry-run                     Perform a dry run (no actual changes, use with deploy only)
+  -h, --help                    Display this help and exit
 
 Examples:
   ${progname} new post "My New Post"
   ${progname} new page "About Me" --project-path /path/to/project
   ${progname} deploy -p /path/to/project -d /remote/path -H myserver
+  ${progname} deploy --dry-run
 EOF
 }
 
