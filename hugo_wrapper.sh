@@ -122,6 +122,18 @@ validate_project_path() {
     fi
 }
 
+# Helper: Validate deploy parameters
+validate_deploy_params() {
+    if [ -z "${DEPLOY_HOST:-}" ]; then
+        echo "Error: DEPLOY_HOST is required for deployment." >&2
+        exit 1
+    fi
+    if [ -z "${DEPLOY_PATH:-}" ]; then
+        echo "Error: DEPLOY_PATH is required for deployment." >&2
+        exit 1
+    fi
+}
+
 # Helper: Slugify title
 slugify() {
     local title="$1"
@@ -221,6 +233,7 @@ new_page() {
 deploy_site() {
     parse_common_options "$@"
     validate_project_path
+    validate_deploy_params
 
     # Save original directory
     local original_dir
