@@ -106,7 +106,7 @@ parse_common_options() {
             exit 0
             ;;
         *)
-            echo "Unknown option: $1"
+            echo "Error: Unknown option: $1" >&2
             usage
             exit 1
             ;;
@@ -117,7 +117,7 @@ parse_common_options() {
 # Helper: Validate project path exists
 validate_project_path() {
     if [ ! -d "$PROJECT_PATH" ]; then
-        echo "Error: Project path doesn't exist: $PROJECT_PATH"
+        echo "Error: Project path doesn't exist: $PROJECT_PATH" >&2
         exit 1
     fi
 }
@@ -149,7 +149,7 @@ new_post() {
     original_dir=$(pwd)
 
     cd "$PROJECT_PATH" || {
-        echo "Invalid project path: $PROJECT_PATH"
+        echo "Error: Invalid project path: $PROJECT_PATH" >&2
         exit 1
     }
 
@@ -160,7 +160,7 @@ new_post() {
 
     echo "Creating new post: $file_path"
     if ! hugo new "$file_rel_path"; then
-        echo "Error creating the post."
+        echo "Error: Failed to create the post." >&2
         cd "$original_dir" || true
         exit 1
     fi
@@ -191,7 +191,7 @@ new_page() {
     original_dir=$(pwd)
 
     cd "$PROJECT_PATH" || {
-        echo "Invalid project path: $PROJECT_PATH"
+        echo "Error: Invalid project path: $PROJECT_PATH" >&2
         exit 1
     }
 
@@ -202,7 +202,7 @@ new_page() {
 
     echo "Creating new page: $file_path"
     if ! hugo new "$file_rel_path"; then
-        echo "Error creating the page."
+        echo "Error: Failed to create the page." >&2
         cd "$original_dir" || true
         exit 1
     fi
@@ -222,38 +222,31 @@ deploy_site() {
     parse_common_options "$@"
     validate_project_path
 
-    # Check for hugo
-    if ! command -v hugo >/dev/null; then
-        echo "Hugo is not installed."
-        exit 1
-    fi
-
     # Save original directory
     local original_dir
     original_dir=$(pwd)
 
     cd "$PROJECT_PATH" || {
-        echo "Invalid project path: $PROJECT_PATH"
+        echo "Error: Invalid project path: $PROJECT_PATH" >&2
         exit 1
     }
 
     echo "Generating the site with Hugo..."
     if ! hugo --minify --gc --environment production; then
-        echo "Error during site generation."
+        echo "Error: Failed during site generation." >&2
         cd "$original_dir" || true
         exit 1
     fi
 
     # Setup rsync options
-    local RSYNC_OPTS="-avz --delete --checksum --human-readable --progress"
     if [ "$DRY_RUN" = true ]; then
         RSYNC_OPTS="$RSYNC_OPTS --dry-run"
         echo "Running in dry-run mode (no actual changes will be made)..."
     fi
 
     echo "Deploying the site to ${DEPLOY_HOST}:${DEPLOY_PATH}..."
-    if ! rsync $RSYNC_OPTS public/ "${DEPLOY_HOST}:${DEPLOY_PATH}"; then
-        echo "Error during rsync deployment."
+    if ! rsync "${RSYNC_OPTS[@]}" public/ "${DEPLOY_HOST}:${DEPLOY_PATH}"; then
+        echo "Error: Failed during rsync deployment." >&2
         cd "$original_dir" || true
         exit 1
     fi
@@ -289,7 +282,7 @@ new)
         new_page "$TITLE" "$@"
         ;;
     *)
-        echo "Unknown new type: $NEW_TYPE"
+        echo "Error: Unknown new type: $NEW_TYPE" >&2
         usage
         exit 1
         ;;
@@ -303,7 +296,7 @@ deploy)
     exit 0
     ;;
 *)
-    echo "Unknown command: $COMMAND"
+    echo "Error: Unknown command: $COMMAND" >&2
     usage
     exit 1
     ;;
