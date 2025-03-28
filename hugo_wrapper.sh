@@ -9,6 +9,12 @@ set -euo pipefail
 # Trap interrupts for clean termination
 trap 'echo "Script interrupted"; exit 1' INT TERM
 
+# Check for hugo early
+if ! command -v hugo >/dev/null; then
+    echo "Error: Hugo is not installed." >&2
+    exit 1
+fi
+
 CONFIG_FILE="$HOME/.config/hugo_wrapper.conf"
 if [[ -f "$CONFIG_FILE" ]]; then
     while IFS='=' read -r key value; do
