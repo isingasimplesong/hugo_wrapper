@@ -252,8 +252,9 @@ deploy_site() {
     fi
 
     # Setup rsync options
+    local RSYNC_OPTS=(-avz --delete --checksum --human-readable --progress)
     if [ "$DRY_RUN" = true ]; then
-        RSYNC_OPTS="$RSYNC_OPTS --dry-run"
+        RSYNC_OPTS+=(--dry-run)
         echo "Running in dry-run mode (no actual changes will be made)..."
     fi
 
