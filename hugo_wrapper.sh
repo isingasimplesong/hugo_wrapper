@@ -108,6 +108,14 @@ parse_common_options() {
     done
 }
 
+# Helper: Validate project path exists
+validate_project_path() {
+    if [ ! -d "$PROJECT_PATH" ]; then
+        echo "Error: Project path doesn't exist: $PROJECT_PATH"
+        exit 1
+    fi
+}
+
 # Helper: Slugify title
 slugify() {
     local title="$1"
@@ -121,6 +129,7 @@ new_post() {
     local title="$1"
     shift
     parse_common_options "$@"
+    validate_project_path
 
     local slug
     slug=$(slugify "$title")
@@ -156,6 +165,7 @@ new_page() {
     local title="$1"
     shift
     parse_common_options "$@"
+    validate_project_path
 
     local slug
     slug=$(slugify "$title")
@@ -186,6 +196,7 @@ new_page() {
 # Command: deploy
 deploy_site() {
     parse_common_options "$@"
+    validate_project_path
 
     # Check for hugo
     if ! command -v hugo >/dev/null; then
@@ -211,7 +222,6 @@ deploy_site() {
         echo "Running in dry-run mode (no actual changes will be made)..."
     fi
     echo "Deploying the site to ${DEPLOY_HOST}:${DEPLOY_PATH}..."
-    if ! rsync -az --delete public/ "${DEPLOY_HOST}:${DEPLOY_PATH}"; then
     if ! rsync $RSYNC_OPTS public/ "${DEPLOY_HOST}:${DEPLOY_PATH}"; then
         echo "Error during rsync deployment."
         exit 1
