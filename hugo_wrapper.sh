@@ -21,7 +21,11 @@ usage() {
     cat <<EOF
 Usage: ${progname} <command> [subcommand/arguments] [OPTIONS]
 
-Expect a config file in ~/.config/hugo_wrapper.conf
+    PROJECT_PATH, DEPLOY_HOST & DEPLOY_PATH variables must be set, in conf or
+    via command line arguments
+
+    Config is read from ~/.config/hugo_wrapper.conf, and command line arguments
+    override it
 
 Commands:
   new post "Post Title" [OPTIONS]
@@ -44,9 +48,9 @@ Common Options:
   -h, --help                    Display this help and exit.
 
 Examples:
-  $0 new post "My New Post"
-  $0 new page "About Me" --project-path /path/to/project
-  $0 deploy -p /path/to/project -d /remote/path -H myserver
+  ${progname} new post "My New Post"
+  ${progname} new page "About Me" --project-path /path/to/project
+  ${progname} deploy -p /path/to/project -d /remote/path -H myserver
 EOF
 }
 
