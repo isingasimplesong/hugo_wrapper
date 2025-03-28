@@ -70,3 +70,12 @@ PROJECT_PATH=/home/username/myhugosite
 DEPLOY_HOST=user@example.com
 DEPLOY_PATH=/var/www/mysite
 ```
+
+## To Do
+
+- Implement commands :
+  - `hugo_wrapper.sh list posts | pages | drafts` : list post/pages/draft with an id
+  - `hugo_wrapper.sh rm id`
+  - `hugo_wrapper.sh publish id` : set draft status to false
+  - `hugo_wrapper.sh unpublish id` : set draft status to true
+  - `hugo_wrapper.sh edit id`
