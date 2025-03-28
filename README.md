@@ -11,8 +11,6 @@ hugo_wrapper.sh <command> [subcommand/arguments] [OPTIONS]
 - `PROJECT_PATH`, `DEPLOY_HOST` & `DEPLOY_PATH` variables must be set, either in the configuration file or via command line arguments.
 - Configuration is read from `~/.config/hugo_wrapper.conf`, and command line arguments override the configuration.
 
----
-
 ### Commands
 
 #### New Post
