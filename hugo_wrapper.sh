@@ -137,6 +137,9 @@ new_post() {
     date_str=$(date +%Y-%m-%d)
     local file_rel_path="content/posts/${date_str}-${slug}.md"
 
+    # Save original directory
+    local original_dir
+    original_dir=$(pwd)
     cd "$PROJECT_PATH" || {
         echo "Invalid project path: $PROJECT_PATH"
         exit 1
@@ -150,6 +153,7 @@ new_post() {
     echo "Creating new post: $file_path"
     if ! hugo new "$file_rel_path"; then
         echo "Error creating the post."
+        cd "$original_dir" || true
         exit 1
     fi
     echo "Post created successfully."
@@ -158,6 +162,8 @@ new_post() {
         echo "Opening post in \$EDITOR ($EDITOR)..."
         "$EDITOR" "$file_path"
     fi
+    # Return to original directory
+    cd "$original_dir" || true
 }
 
 # Command: new page
@@ -171,6 +177,9 @@ new_page() {
     slug=$(slugify "$title")
     local file_rel_path="content/pages/${slug}.md"
 
+    # Save original directory
+    local original_dir
+    original_dir=$(pwd)
     cd "$PROJECT_PATH" || {
         echo "Invalid project path: $PROJECT_PATH"
         exit 1
@@ -183,6 +192,7 @@ new_page() {
     echo "Creating new page: $file_path"
     if ! hugo new "$file_rel_path"; then
         echo "Error creating the page."
+        cd "$original_dir" || true
         exit 1
     fi
     echo "Page created successfully."
@@ -191,6 +201,8 @@ new_page() {
         echo "Opening page in \$EDITOR ($EDITOR)..."
         "$EDITOR" "$file_path"
     fi
+    # Return to original directory
+    cd "$original_dir" || true
 }
 
 # Command: deploy
@@ -204,6 +216,9 @@ deploy_site() {
         exit 1
     fi
 
+    # Save original directory
+    local original_dir
+    original_dir=$(pwd)
     cd "$PROJECT_PATH" || {
         echo "Invalid project path: $PROJECT_PATH"
         exit 1
@@ -212,6 +227,7 @@ deploy_site() {
     echo "Generating the site with Hugo..."
     if ! hugo --minify --gc --environment production; then
         echo "Error during site generation."
+        cd "$original_dir" || true
         exit 1
     fi
 
@@ -224,10 +240,12 @@ deploy_site() {
     echo "Deploying the site to ${DEPLOY_HOST}:${DEPLOY_PATH}..."
     if ! rsync $RSYNC_OPTS public/ "${DEPLOY_HOST}:${DEPLOY_PATH}"; then
         echo "Error during rsync deployment."
+        cd "$original_dir" || true
         exit 1
     fi
 
     echo "Deployment succeeded!"
+    cd "$original_dir" || true
 }
 
 # Main command dispatcher
