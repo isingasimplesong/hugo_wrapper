@@ -18,6 +18,9 @@ if [[ -f "$CONFIG_FILE" ]]; then
     done <"$CONFIG_FILE"
 fi
 
+# Default dry run to false
+DRY_RUN=false
+
 # Loop over required variables and check if they're set.
 for var in PROJECT_PATH DEPLOY_PATH DEPLOY_HOST; do
     if [ -z "${!var:-}" ]; then
@@ -82,6 +85,10 @@ parse_common_options() {
         -H | --deploy-host)
             DEPLOY_HOST="$2"
             shift 2
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
             ;;
         -h | --help)
             usage
@@ -192,8 +199,15 @@ deploy_site() {
         exit 1
     fi
 
+    # Setup rsync options
+    local RSYNC_OPTS="-avz --delete --checksum --human-readable --progress"
+    if [ "$DRY_RUN" = true ]; then
+        RSYNC_OPTS="$RSYNC_OPTS --dry-run"
+        echo "Running in dry-run mode (no actual changes will be made)..."
+    fi
     echo "Deploying the site to ${DEPLOY_HOST}:${DEPLOY_PATH}..."
     if ! rsync -az --delete public/ "${DEPLOY_HOST}:${DEPLOY_PATH}"; then
+    if ! rsync $RSYNC_OPTS public/ "${DEPLOY_HOST}:${DEPLOY_PATH}"; then
         echo "Error during rsync deployment."
         exit 1
     fi
