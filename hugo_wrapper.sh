@@ -119,9 +119,10 @@ validate_project_path() {
 # Helper: Slugify title
 slugify() {
     local title="$1"
-    # Convert to lower case, replace non-alphanumerics with dashes,
+    # Convert to ASCII, convert to lower case, replace non-alphanumerics with dashes,
     # then remove leading/trailing dashes.
-    echo "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | sed 's/^-//;s/-$//'
+    echo "$title" | iconv -t ascii//TRANSLIT | tr '[:upper:]' '[:lower:]' |
+        tr -d '[:punct:]' | tr '[:space:]' '-' | sed 's/-\+/-/g' | sed 's/^-//;s/-$//'
 }
 
 # Command: new post
@@ -140,6 +141,7 @@ new_post() {
     # Save original directory
     local original_dir
     original_dir=$(pwd)
+
     cd "$PROJECT_PATH" || {
         echo "Invalid project path: $PROJECT_PATH"
         exit 1
@@ -162,6 +164,7 @@ new_post() {
         echo "Opening post in \$EDITOR ($EDITOR)..."
         "$EDITOR" "$file_path"
     fi
+
     # Return to original directory
     cd "$original_dir" || true
 }
@@ -180,10 +183,12 @@ new_page() {
     # Save original directory
     local original_dir
     original_dir=$(pwd)
+
     cd "$PROJECT_PATH" || {
         echo "Invalid project path: $PROJECT_PATH"
         exit 1
     }
+
     # Convert PROJECT_PATH to its absolute value
     PROJECT_PATH="$(pwd)"
 
@@ -201,6 +206,7 @@ new_page() {
         echo "Opening page in \$EDITOR ($EDITOR)..."
         "$EDITOR" "$file_path"
     fi
+
     # Return to original directory
     cd "$original_dir" || true
 }
@@ -219,6 +225,7 @@ deploy_site() {
     # Save original directory
     local original_dir
     original_dir=$(pwd)
+
     cd "$PROJECT_PATH" || {
         echo "Invalid project path: $PROJECT_PATH"
         exit 1
@@ -237,6 +244,7 @@ deploy_site() {
         RSYNC_OPTS="$RSYNC_OPTS --dry-run"
         echo "Running in dry-run mode (no actual changes will be made)..."
     fi
+
     echo "Deploying the site to ${DEPLOY_HOST}:${DEPLOY_PATH}..."
     if ! rsync $RSYNC_OPTS public/ "${DEPLOY_HOST}:${DEPLOY_PATH}"; then
         echo "Error during rsync deployment."
