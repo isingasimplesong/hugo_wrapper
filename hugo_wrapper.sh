@@ -8,7 +8,14 @@ set -euo pipefail
 
 CONFIG_FILE="$HOME/.config/hugo_wrapper.conf"
 if [[ -f "$CONFIG_FILE" ]]; then
-    source "$CONFIG_FILE"
+    while IFS='=' read -r key value; do
+        if [[ ! $key =~ ^[[:space:]]*# && -n $key ]]; then
+            # Remove leading/trailing whitespace
+            key=$(echo "$key" | xargs)
+            value=$(echo "$value" | xargs)
+            declare "$key=$value"
+        fi
+    done <"$CONFIG_FILE"
 fi
 
 # Loop over required variables and check if they're set.
