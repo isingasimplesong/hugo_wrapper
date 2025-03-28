@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
 # hugo_wrapper.sh - help manage hugo websites
-#
 # Copyright (c) 2025, Mathieu Rousseau
-#
 # Provided "as is" under the MIT License
 
 set -euo pipefail
