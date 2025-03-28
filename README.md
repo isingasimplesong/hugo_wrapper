@@ -69,7 +69,4 @@ PROJECT_PATH=/home/username/myhugosite
 # Deployment settings
 DEPLOY_HOST=user@example.com
 DEPLOY_PATH=/var/www/mysite
-
-# Optional: Default editor for new posts/pages
-EDITOR=vim
 ```
