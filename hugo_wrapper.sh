@@ -2,7 +2,7 @@
 
 # hugo_wrapper.sh - help manage hugo websites
 # Copyright (c) 2025, Mathieu Rousseau
-# Provided "as is" under the MIT License
+# Provided "as is" under MIT License
 
 set -euo pipefail
 
@@ -18,14 +18,15 @@ if ! command -v rsync >/dev/null; then
     echo "Error: rsync is not installed." >&2
     exit 1
 fi
-# We need fzf for interactive edit
+
+# fzf for interactive edit
 FZF_INSTALLED=false
 command -v fzf >/dev/null && FZF_INSTALLED=true
+
 EDITOR="${EDITOR:-vi}" # Default to vi if EDITOR is not set
 
-# --- Configuration Loading ---
+# Configuration Loading
 CONFIG_FILE="$HOME/.config/hugo_wrapper.conf"
-# Initialize potentially configurable variables to empty strings
 PROJECT_PATH=""
 DEPLOY_PATH=""
 DEPLOY_HOST=""
@@ -33,7 +34,7 @@ DEPLOY_HOST=""
 if [[ -f "$CONFIG_FILE" ]]; then
     # Use process substitution to avoid subshell issues with the while loop
     while IFS='=' read -r key value || [[ -n "$key" ]]; do # Process last line even if no newline
-        # Remove leading/trailing whitespace from key and value robustly
+        # Remove leading/trailing whitespace from key and value
         key=$(echo "$key" | awk '{$1=$1};1')
         value=$(echo "$value" | awk '{$1=$1};1')
 
@@ -55,34 +56,22 @@ if [[ -f "$CONFIG_FILE" ]]; then
         fi
     done < <(cat "$CONFIG_FILE" 2>/dev/null || true) # Read config, ignore read errors if file vanishes mid-script
 fi
-# --- End Configuration Loading ---
 
 # Default dry run to false
 DRY_RUN=false
 
-# --- Global Variable Validation ---
-# This validation runs *after* config load but *before* options are parsed.
-# Options can override these, and command-specific validation happens later if needed.
-
-# Check required variables that MUST be set either by config or later by options
-# Deployment vars are only strictly required for the deploy command itself.
-# PROJECT_PATH is required for almost all commands.
+# Check required variables that must be set either by config or later by options
 if [ -z "${PROJECT_PATH:-}" ]; then
     echo "Warning: PROJECT_PATH is not set in config. It must be provided via -p option for most commands." >&2
 fi
-# We won't exit here anymore; validation will happen within command handlers after options are parsed.
-# --- End Global Variable Validation ---
 
-# --- Helper Functions ---
-
-# Usage message (Updated)
 usage() {
     local progname
     progname=$(basename "$0")
     cat <<EOF
 Usage: ${progname} <command> [arguments] [OPTIONS]
 
-Manage Hugo websites efficiently.
+Manage Hugo websites efficiently
 
 Requires 'hugo' and 'rsync'. 'fzf' is optional but needed for interactive edit.
 
@@ -90,15 +79,15 @@ Configuration is read from ${CONFIG_FILE} (if it exists).
 Command-line options override configuration variables.
 
 Required variables (can be set in config or via options):
-  PROJECT_PATH      Path to the Hugo project root directory (required for most commands).
-  DEPLOY_HOST       Remote host for deployment (required for 'deploy').
-  DEPLOY_PATH       Remote directory path for deployment (required for 'deploy').
+  PROJECT_PATH      Path to the Hugo project root directory
+  DEPLOY_HOST       Remote host for deployment
+  DEPLOY_PATH       Remote directory path for deployment
 
 Commands:
-  new post "<Title>"        Create a new post in content/posts/. Defaults to draft.
-                            Opens in \$EDITOR if set.
-  new page "<Title>"        Create a new page in content/pages/. Defaults to draft.
-                            Opens in \$EDITOR if set.
+  new post "<Title>"        Create a new post in content/posts/
+                            Opens in \$EDITOR if set
+  new page "<Title>"        Create a new page in content/pages/
+                            Opens in \$EDITOR if set
 
   list [posts|pages] [draft|public]
                             List content with IDs. Filters are optional and can be
@@ -109,25 +98,25 @@ Commands:
                               list draft       # List only drafts (posts and pages)
                               list pages public # List only published pages
 
-  edit [ID...]             Open content file(s) with matching IDs in \$EDITOR.
-  edit [posts|pages]       Interactively select content to edit using fzf.
+  edit [ID...]             Open content file(s) with matching IDs in \$EDITOR
+  edit [posts|pages]       Interactively select content to edit using fzf
                             (Requires fzf installed). Example: edit posts
 
   status <ID> [draft|public]
-                            Show or set the draft status of content by ID.
+                            Show or set the draft status of content by ID
                             Example:
                               status 1          # Show status of item with ID 1
                               status 1 draft    # Set item 1 to draft (draft: true)
                               status 1 public   # Set item 1 to public (draft: false)
 
-  deploy                    Build the site (using 'production' environment) and deploy using rsync.
+  deploy                    Build the site (using 'production' environment) and deploy using rsync
 
-Common Options:
-  -p, --project-path PATH   Override/set PROJECT_PATH for this run.
-  -d, --deploy-path PATH    Override/set DEPLOY_PATH for this run.
-  -H, --deploy-host HOST    Override/set DEPLOY_HOST for this run.
-  --dry-run                 Perform a dry run (deploy command only).
-  -h, --help                Display this help message and exit.
+Options:
+  -p, --project-path PATH   Override/set PROJECT_PATH for this run
+  -d, --deploy-path PATH    Override/set DEPLOY_PATH for this run
+  -H, --deploy-host HOST    Override/set DEPLOY_HOST for this run
+  --dry-run                 Perform a dry run (deploy command only)
+  -h, --help                Display this help message and exit
 
 Examples:
   ${progname} new post "My Awesome Journey"
@@ -139,9 +128,7 @@ Examples:
 EOF
 }
 
-# Helper: Parse common options
-parse_common_options() {
-    # Use getopt for robust option parsing
+parse_options() {
     local parsed_options OptsInd
     parsed_options=$(getopt -o p:d:H:h --long project-path:,deploy-path:,deploy-host:,dry-run,help -n "$(basename "$0")" -- "$@")
 
@@ -187,7 +174,6 @@ parse_common_options() {
     # Remaining arguments ($@) are returned to the caller
 }
 
-# Helper: Validate project path exists and is absolute
 validate_project_path() {
     if [ -z "${PROJECT_PATH:-}" ]; then
         echo "Error: PROJECT_PATH is required but not set (by config or -p option)." >&2
@@ -202,7 +188,6 @@ validate_project_path() {
     PROJECT_PATH=$(cd "$PROJECT_PATH" && pwd)
 }
 
-# Helper: Validate deploy parameters are set
 validate_deploy_params() {
     local missing_vars=()
     if [ -z "${DEPLOY_HOST:-}" ]; then missing_vars+=("DEPLOY_HOST (-H)"); fi
@@ -216,14 +201,13 @@ validate_deploy_params() {
     fi
 }
 
-# Helper: Slugify title
 slugify() {
     local title="$1"
     echo "$title" | iconv -f utf-8 -t ascii//TRANSLIT | tr '[:upper:]' '[:lower:]' |
         tr -cs '[:alnum:]' '-' | sed 's/-\+/-/g; s/^-//; s/-$//'
 }
 
-# Helper: Get content files with IDs and details (for list, edit, status)
+# Get content files with IDs and details (for list, edit, status)
 _get_content_files() {
     local type_filter="${1:-all}"   # posts, pages, all
     local status_filter="${2:-all}" # draft, public, all
@@ -255,8 +239,8 @@ _get_content_files() {
             file_type="page"
         fi
 
-        # Determine status (draft: true/false)
-        local is_draft="false" # Default public
+        # Determine draft status (true/false)
+        local is_draft="false"
         if grep -q -E '^[[:space:]]*draft:[[:space:]]*true' "$file_path"; then
             is_draft="true"
         fi
@@ -277,13 +261,9 @@ _get_content_files() {
     done | sort -t $'\t' -k4 # Sort by relative path for consistency
 }
 
-# Helper: Find file path by ID (for edit, status)
 _find_file_by_id() {
     local target_id="$1"
     local found_path=""
-    # PROJECT_PATH must be valid here
-    # Search all files to find the ID, using the same listing logic
-    # Use process substitution and capture output
     local file_list
     file_list=$(_get_content_files "all" "all")
     if [[ -n "$file_list" ]]; then
@@ -297,15 +277,13 @@ _find_file_by_id() {
     echo "$found_path"
 }
 
-# --- Command Handlers ---
-
-# Command: new post/page (Adapted from original, combined)
+# Commands
 handle_new() {
     local type="$1" # post or page
     local title="$2"
     shift 2 # Consume type and title
-    # Pass remaining args (options) to parser
-    parse_common_options "$@"
+    # Pass remaining args to parser
+    parse_options "$@"
     validate_project_path # Validate after options override config
 
     if [ -z "$title" ]; then
@@ -362,15 +340,14 @@ handle_new() {
 
     if [ -n "$EDITOR" ]; then
         echo "Opening in \$EDITOR ($EDITOR)..."
-        eval "$EDITOR \"$file_abs_path\"" # Use eval for complex EDITOR vars
+        eval "$EDITOR \"$file_abs_path\""
     fi
 }
 
-# Command: list (New)
 handle_list() {
     local type_filter="all"
     local status_filter="all"
-    local options_args=() # Arguments to pass to parse_common_options
+    local options_args=() # Arguments to pass to parse_options
 
     # Separate filters from options
     while [[ $# -gt 0 ]]; do
@@ -405,8 +382,8 @@ handle_list() {
         esac
     done
 
-    parse_common_options "${options_args[@]}"
-    validate_project_path # Requires PROJECT_PATH
+    parse_options "${options_args[@]}"
+    validate_project_path
 
     echo "Listing content in: $PROJECT_PATH/content"
     echo "Filters: Type=${type_filter}, Status=${status_filter}"
@@ -425,7 +402,6 @@ handle_list() {
     echo "--------------------------------------------------"
 }
 
-# Command: edit (New)
 handle_edit() {
     local ids=()
     local type_filter="all" # For fzf mode
@@ -441,7 +417,7 @@ handle_edit() {
         elif [[ "$1" == -* ]]; then
             options_args+=("$1")
             shift # Collect option flag
-            # Check if option needs an argument (simple check)
+            # Check if option needs an argument
             case "${options_args[-1]}" in -p | -d | -H | --project-path | --deploy-path | --deploy-host)
                 if [[ -n "$1" && "$1" != -* ]]; then
                     options_args+=("$1")
@@ -487,17 +463,17 @@ handle_edit() {
         esac
     done
 
-    parse_common_options "${options_args[@]}"
-    validate_project_path # Requires PROJECT_PATH
+    parse_options "${options_args[@]}"
+    validate_project_path
 
     local files_to_edit=()
 
     if [[ ${#ids[@]} -gt 0 ]]; then
-        # --- Edit by ID ---
+        # Edit by ID
         echo "Attempting to edit by ID(s): ${ids[*]}"
         for id in "${ids[@]}"; do
             local file_path
-            file_path=$(_find_file_by_id "$id") # Requires PROJECT_PATH to be set
+            file_path=$(_find_file_by_id "$id") to be set
             if [[ -z "$file_path" ]]; then
                 echo "Warning: No content found with ID $id. Skipping." >&2
             elif [[ ! -f "$file_path" ]]; then
@@ -507,7 +483,7 @@ handle_edit() {
             fi
         done
     else
-        # --- Interactive Edit using fzf ---
+        # Interactive Edit using fzf
         if ! $FZF_INSTALLED; then
             echo "Error: 'fzf' is required for interactive editing. Please install fzf." >&2
             exit 1
@@ -515,7 +491,7 @@ handle_edit() {
 
         echo "Entering interactive edit mode (Type filter: ${type_filter})..."
         local content_list preview_cmd
-        content_list=$(_get_content_files "$type_filter" "all") # Requires PROJECT_PATH
+        content_list=$(_get_content_files "$type_filter" "all")
 
         if [ -z "$content_list" ]; then
             echo "No content found matching filter '$type_filter' to select from."
@@ -530,7 +506,7 @@ handle_edit() {
             echo "$content_list" | fzf --multi --height 40% --border \
                 --header $'[ID]\t[Status]\t[Type]\t[Path] (CTRL+Space to multi-select, Enter to confirm)' \
                 \
-                --bind='ctrl-space:toggle+up' --prompt="Select content (Type: $type_filter)> " # --preview="$preview_cmd" --preview-window='right:60%:wrap' \
+                --bind='ctrl-space:toggle+up' --prompt="Select content (Type: $type_filter)> "
         )
 
         if [[ -z "$selected_lines" ]]; then
@@ -557,11 +533,10 @@ handle_edit() {
 
     echo "Opening selected file(s) in \$EDITOR ($EDITOR):"
     printf " - %s\n" "${files_to_edit[@]}"
-    eval "$EDITOR \"${files_to_edit[@]}\"" # Use eval for complex EDITOR vars / multiple files
+    eval "$EDITOR \"${files_to_edit[@]}\""
     echo "Finished editing."
 }
 
-# Command: status (New)
 handle_status() {
     local id target_status=""
     local non_option_args=()
@@ -612,11 +587,11 @@ handle_status() {
         exit 1
     fi
 
-    parse_common_options "${options_args[@]}"
-    validate_project_path # Requires PROJECT_PATH
+    parse_options "${options_args[@]}"
+    validate_project_path
 
     local file_path
-    file_path=$(_find_file_by_id "$id") # Requires PROJECT_PATH
+    file_path=$(_find_file_by_id "$id")
 
     if [[ -z "$file_path" ]]; then
         echo "Error: No content found with ID $id." >&2
@@ -629,7 +604,7 @@ handle_status() {
 
     local rel_path="${file_path#"$PROJECT_PATH/"}" # Get relative path for display
 
-    # --- Display current status ---
+    # Display current status
     if [[ -z "$target_status" ]]; then
         local current_status="public" # Default assumption
         local draft_line
@@ -639,14 +614,13 @@ handle_status() {
         exit 0
     fi
 
-    # --- Set new status ---
+    # Set new status
     local new_draft_value="false"
     [[ "$target_status" == "draft" ]] && new_draft_value="true"
     local new_status_line="draft: ${new_draft_value}"
 
     echo "Setting status for ID $id ($rel_path) to: $target_status (${new_status_line})"
 
-    # Use sed to replace the line or add it if missing (simple approach)
     local sed_script backup_needed=true
     if grep -q -E '^[[:space:]]*draft:[[:space:]]*' "$file_path"; then
         # Line exists, replace it
@@ -667,7 +641,7 @@ handle_status() {
     if grep -q -E '^[[:space:]]*draft:[[:space:]]*true' "$file_path"; then current_draft_value="true"; fi
     if [[ "$current_draft_value" == "$new_draft_value" ]]; then
         echo "Status already set to '$target_status'. No changes made."
-        backup_needed=false # No need to run sed or handle backup
+        backup_needed=false
     fi
 
     if $backup_needed; then
@@ -684,11 +658,10 @@ handle_status() {
     fi
 }
 
-# Command: deploy (Adapted from original)
 handle_deploy() {
-    parse_common_options "$@" # Parse options like --dry-run
-    validate_project_path     # Validate PROJECT_PATH
-    validate_deploy_params    # Validate DEPLOY_HOST and DEPLOY_PATH
+    parse_options "$@"
+    validate_project_path
+    validate_deploy_params
 
     local original_dir
     original_dir=$(pwd)
@@ -698,7 +671,7 @@ handle_deploy() {
     }
     trap 'cd "$original_dir"' EXIT INT TERM # Ensure cd back
 
-    echo "Generating the site with Hugo (environment: production)..."
+    echo "Generating the site..."
     if ! hugo --minify --gc --environment production; then
         echo "Error: Failed during site generation." >&2
         exit 1
@@ -727,7 +700,7 @@ handle_deploy() {
     cd "$original_dir" || true
 }
 
-# --- Main Command Dispatcher ---
+# Main Command Dispatcher
 if [[ "$#" -lt 1 ]]; then
     usage
     exit 1
@@ -772,6 +745,5 @@ deploy)
     exit 1
     ;;
 esac
-# --- End Command Dispatcher ---
 
-exit 0 # Explicit success exit
+exit 0
