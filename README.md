@@ -18,7 +18,7 @@ A Bash script to help manage Hugo websites, simplifying common tasks like creati
 * Bash
 * [Hugo](https://gohugo.io/)
 * `rsync`
-* Standard Unix tools (`find`, `grep`, `sed`, `awk`, `sort`, `column`, `mktemp`, `iconv`, `tr`, `cat`, `date`, `getopt`, `mkdir`)
+* Standard Unix tools (`find`, `grep`, `sed`...)
 * [`fzf`](https://github.com/junegunn/fzf) (Optional, but required for the interactive `edit` command without IDs)
 * [`bat`](https://github.com/sharkdp/bat) (Optional, for syntax highlighting in `fzf` preview)
 
